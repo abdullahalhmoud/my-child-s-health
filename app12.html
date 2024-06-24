@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة تنبيه بالتاريخ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e0f7fa;
+            padding: 20px;
+        }
+        h1 {
+            color: #007acc;
+        }
+        input, button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="date"] {
+            background-color: #fff;
+        }
+        button {
+            background-color: #007acc;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005b99;
+        }
+        #savedDates {
+            margin-top: 20px;
+            text-align: left;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li button {
+            background-color: #e74c3c;
+            color: #fff;
+            cursor: pointer;
+        }
+        li button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>ادخل تاريخ ميلاد طفلك</h1>
+    <input type="date" id="birthDate">
+    <button onclick="setReminders()">اضبط التذكيرات</button>
+    <div id="savedDates">
+        <h2>التواريخ المحفوظة:</h2>
+        <ul id="dateList"></ul>
+    </div>
+    <script>
+        let savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
+
+        function setReminders() {
+            const birthDate = new Date(document.getElementById('birthDate').value);
+            const now = new Date();
+
+            if (birthDate >= now) {
+                alert("الرجاء إدخال تاريخ ميلاد صحيح!");
+                return;
+            }
+
+            // الأشهر المطلوبة للتذكير
+            const months = [1, 3, 4, 5, 10, 12, 18];
+            months.forEach(month => {
+                const reminderDate = new Date(birthDate);
+                reminderDate.setMonth(reminderDate.getMonth() + month);
+                if (reminderDate > now) {
+                    const memo = `حان موعد تطعيم الطفل لعمر ${month} شهر`;
+                    savedDates.push({ date: reminderDate, memo: memo });
+                }
+            });
+
+            saveToLocalStorage();
+            updateDateList();
+        }
+
+        function updateDateList() {
+            const dateList = document.getElementById('dateList');
+            dateList.innerHTML = '';
+            savedDates.forEach((item, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${new Date(item.date).toLocaleDateString()} - ${item.memo}`;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'حذف';
+                deleteButton.addEventListener('click', () => removeDate(index));
+                listItem.appendChild(deleteButton);
+                dateList.appendChild(listItem);
+            });
+        }
+
+        function removeDate(index) {
+            savedDates.splice(index, 1);
+            saveToLocalStorage();
+            updateDateList();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('savedDates', JSON.stringify(savedDates));
+        }
+
+        // تحميل التواريخ المحفوظة عند فتح الصفحة
+        window.onload = function() {
+            updateDateList();
+            checkReminders();
+        }
+
+        function checkReminders() {
+            const now = new Date();
+            savedDates.forEach(item => {
+                const reminderDate = new Date(item.date);
+                if (now >= reminderDate && now - reminderDate < 86400000) { // التذكير بيوم كامل (24 ساعة)
+                    alert(`تذكير: ${item.memo}`);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
